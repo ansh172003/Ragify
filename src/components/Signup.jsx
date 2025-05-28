@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 function Signup() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ function Signup() {
     setError('');
     
     try {
-      const response = await axios.post('http://127.0.0.1:5000/api/auth/register', formData);
+      const response = await axios.post(`${API_URL}/api/auth/register`, formData);
       if (response.data) {
         // Redirect to login page on successful signup
         navigate('/login');

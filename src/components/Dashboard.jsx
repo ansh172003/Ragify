@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FaCopy, FaTrash, FaPlus, FaUpload, FaPlay } from 'react-icons/fa';
+import { API_URL } from '../config';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ function Dashboard() {
     // Fetch user data
     const fetchUserData = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:5000/api/auth/me');
+        const response = await axios.get(`${API_URL}/api/auth/me`);
         console.log('User data response:', response.data);
         setUserData(response.data);
         setErrors(prev => ({ ...prev, user: '' }));
@@ -60,7 +61,7 @@ function Dashboard() {
     // Fetch files
     const fetchFiles = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:5000/api/files/');
+        const response = await axios.get(`${API_URL}/api/files/`);
         setFiles(response.data);
         setErrors(prev => ({ ...prev, files: '' }));
       } catch (err) {
@@ -74,7 +75,7 @@ function Dashboard() {
     // Fetch API keys
     const fetchApiKeys = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:5000/api/keys/');
+        const response = await axios.get(`${API_URL}/api/keys/`);
         setApiKeys(response.data);
         setErrors(prev => ({ ...prev, keys: '' }));
       } catch (err) {
@@ -114,7 +115,7 @@ function Dashboard() {
 
   const handleDeleteKey = async (keyId) => {
     try {
-      await axios.delete(`http://127.0.0.1:5000/api/keys/${keyId}`);
+      await axios.delete(`${API_URL}/api/keys/${keyId}`);
       setApiKeys(apiKeys.filter(key => key.id !== keyId));
       setErrors(prev => ({ ...prev, keys: '' }));
     } catch (err) {
@@ -125,10 +126,10 @@ function Dashboard() {
   const handleGenerateKey = async () => {
     setGeneratingKey(true);
     try {
-      await axios.post('http://127.0.0.1:5000/api/keys/', {
+      await axios.post(`${API_URL}/api/keys/`, {
         name: `key-${new Date().getTime()}`
       });
-      const response = await axios.get('http://127.0.0.1:5000/api/keys/');
+      const response = await axios.get(`${API_URL}/api/keys/`);
       setApiKeys(response.data);
       setErrors(prev => ({ ...prev, keys: '' }));
     } catch (err) {
@@ -147,12 +148,12 @@ function Dashboard() {
     formData.append('file', file);
 
     try {
-      await axios.post('http://127.0.0.1:5000/api/files/upload', formData, {
+      await axios.post(`${API_URL}/api/files/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
-      const response = await axios.get('http://127.0.0.1:5000/api/files/');
+      const response = await axios.get(`${API_URL}/api/files/`);
       setFiles(response.data);
       setErrors(prev => ({ ...prev, files: '' }));
     } catch (err) {
@@ -167,8 +168,8 @@ function Dashboard() {
 
   const handleToggleKey = async (keyId, currentStatus) => {
     try {
-      await axios.post(`http://127.0.0.1:5000/api/keys/${keyId}/toggle`);
-      const response = await axios.get('http://127.0.0.1:5000/api/keys/');
+      await axios.post(`${API_URL}/api/keys/${keyId}/toggle`);
+      const response = await axios.get(`${API_URL}/api/keys/`);
       setApiKeys(response.data);
       setErrors(prev => ({ ...prev, keys: '' }));
     } catch (err) {
@@ -185,7 +186,7 @@ function Dashboard() {
     setTesting(true);
     setErrors(prev => ({ ...prev, test: '' }));
     try {
-      const response = await axios.post('http://127.0.0.1:5000/api/query/ask', 
+      const response = await axios.post(`${API_URL}/api/query/ask`, 
         { query: testQuery },
         {
           headers: {
