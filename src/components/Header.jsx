@@ -45,15 +45,6 @@ function Header() {
             </li>
             <li>
               <Link
-                to="/fileconversion"
-                className="block py-2 px-4 hover:text-yellow-300 transition-colors"
-                onClick={() => setMenuOpen(false)}
-              >
-                Convert
-              </Link>
-            </li>
-            <li>
-              <Link
                 to="/pricing"
                 className="block py-2 px-4 hover:text-yellow-300 transition-colors"
                 onClick={() => setMenuOpen(false)}
