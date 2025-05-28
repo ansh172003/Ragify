@@ -9,7 +9,12 @@ function Dashboard() {
   const [userData, setUserData] = useState(null);
   const [files, setFiles] = useState([]);
   const [apiKeys, setApiKeys] = useState([]);
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({
+    user: '',
+    files: '',
+    keys: '',
+    test: ''
+  });
   const [loading, setLoading] = useState({
     user: true,
     files: true,
@@ -37,15 +42,16 @@ function Dashboard() {
     const fetchUserData = async () => {
       try {
         const response = await axios.get('http://127.0.0.1:5000/api/auth/me');
-        console.log('User data response:', response.data); // Debug log
+        console.log('User data response:', response.data);
         setUserData(response.data);
+        setErrors(prev => ({ ...prev, user: '' }));
       } catch (err) {
-        console.error('User data fetch error:', err); // Debug log
+        console.error('User data fetch error:', err);
         if (err.response?.status === 401) {
           localStorage.removeItem('token');
           navigate('/login');
         }
-        setError('Failed to fetch user data');
+        setErrors(prev => ({ ...prev, user: 'Failed to fetch user data' }));
       } finally {
         setLoading(prev => ({ ...prev, user: false }));
       }
@@ -56,9 +62,10 @@ function Dashboard() {
       try {
         const response = await axios.get('http://127.0.0.1:5000/api/files/');
         setFiles(response.data);
+        setErrors(prev => ({ ...prev, files: '' }));
       } catch (err) {
         console.error('Files fetch error:', err);
-        setError('Failed to fetch files');
+        setErrors(prev => ({ ...prev, files: 'Failed to fetch files' }));
       } finally {
         setLoading(prev => ({ ...prev, files: false }));
       }
@@ -69,9 +76,10 @@ function Dashboard() {
       try {
         const response = await axios.get('http://127.0.0.1:5000/api/keys/');
         setApiKeys(response.data);
+        setErrors(prev => ({ ...prev, keys: '' }));
       } catch (err) {
         console.error('API keys fetch error:', err);
-        setError('Failed to fetch API keys');
+        setErrors(prev => ({ ...prev, keys: 'Failed to fetch API keys' }));
       } finally {
         setLoading(prev => ({ ...prev, keys: false }));
       }
@@ -108,8 +116,9 @@ function Dashboard() {
     try {
       await axios.delete(`http://127.0.0.1:5000/api/keys/${keyId}`);
       setApiKeys(apiKeys.filter(key => key.id !== keyId));
+      setErrors(prev => ({ ...prev, keys: '' }));
     } catch (err) {
-      setError('Failed to delete API key');
+      setErrors(prev => ({ ...prev, keys: 'Failed to delete API key' }));
     }
   };
 
@@ -117,13 +126,13 @@ function Dashboard() {
     setGeneratingKey(true);
     try {
       await axios.post('http://127.0.0.1:5000/api/keys/', {
-        name: `key-${new Date().getTime()}` // You can modify this to allow custom names
+        name: `key-${new Date().getTime()}`
       });
-      // Refetch API keys after successful creation
       const response = await axios.get('http://127.0.0.1:5000/api/keys/');
       setApiKeys(response.data);
+      setErrors(prev => ({ ...prev, keys: '' }));
     } catch (err) {
-      setError('Failed to generate new API key');
+      setErrors(prev => ({ ...prev, keys: 'Failed to generate new API key' }));
     } finally {
       setGeneratingKey(false);
     }
@@ -143,14 +152,13 @@ function Dashboard() {
           'Content-Type': 'multipart/form-data',
         },
       });
-      // Refetch files after successful upload
       const response = await axios.get('http://127.0.0.1:5000/api/files/');
       setFiles(response.data);
+      setErrors(prev => ({ ...prev, files: '' }));
     } catch (err) {
-      setError('Failed to upload file');
+      setErrors(prev => ({ ...prev, files: 'Failed to upload file' }));
     } finally {
       setUploadingFile(false);
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -160,22 +168,22 @@ function Dashboard() {
   const handleToggleKey = async (keyId, currentStatus) => {
     try {
       await axios.post(`http://127.0.0.1:5000/api/keys/${keyId}/toggle`);
-      // Refetch API keys after toggle
       const response = await axios.get('http://127.0.0.1:5000/api/keys/');
       setApiKeys(response.data);
+      setErrors(prev => ({ ...prev, keys: '' }));
     } catch (err) {
-      setError('Failed to toggle API key status');
+      setErrors(prev => ({ ...prev, keys: 'Failed to toggle API key status' }));
     }
   };
 
   const handleTestQuery = async () => {
     if (!testApiKey.trim()) {
-      setError('Please enter an API key');
+      setErrors(prev => ({ ...prev, test: 'Please enter an API key' }));
       return;
     }
 
     setTesting(true);
-    setError('');
+    setErrors(prev => ({ ...prev, test: '' }));
     try {
       const response = await axios.post('http://127.0.0.1:5000/api/query/ask', 
         { query: testQuery },
@@ -188,48 +196,48 @@ function Dashboard() {
       );
       setTestResponse(response.data.response || response.data);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to get response');
+      setErrors(prev => ({ ...prev, test: err.response?.data?.message || err.message || 'Failed to get response' }));
       setTestResponse('');
     } finally {
       setTesting(false);
     }
   };
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-100 p-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <strong className="font-bold">Error: </strong>
-            <span className="block sm:inline">{error}</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-100 pt-20 pb-8 px-8">
       <div className="max-w-7xl mx-auto">
-        {error && (
-          <div className="mb-6">
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-              <strong className="font-bold">Error: </strong>
-              <span className="block sm:inline">{error}</span>
-              <button
-                onClick={() => setError('')}
-                className="absolute top-0 bottom-0 right-0 px-4 py-3"
-              >
-                <span className="sr-only">Dismiss</span>
-                <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                  <title>Close</title>
-                  <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
-                </svg>
-              </button>
+      {errors.user && (
+            <div className="mb-6">
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong className="font-bold">Error: </strong>
+                <span className="block sm:inline">{errors.user}</span>
+              </div>
             </div>
-          </div>
-        )}
-
+          )}
+          {errors.files && (
+            <div className="mb-6">
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong className="font-bold">Error: </strong>
+                <span className="block sm:inline">{errors.files}</span>
+              </div>
+            </div>
+          )}
+          {errors.keys && (
+            <div className="mb-6">
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong className="font-bold">Error: </strong>
+                <span className="block sm:inline">{errors.keys}</span>
+              </div>
+            </div>
+          )}
+          {errors.test && (
+            <div className="mb-6">
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                <strong className="font-bold">Error: </strong>
+                <span className="block sm:inline">{errors.test}</span>
+              </div>
+            </div>
+          )}
         <div className="mb-8">
           {loading.user ? (
             <span className="animate-pulse">Loading...</span>
@@ -418,7 +426,7 @@ function Dashboard() {
                     value={testApiKey}
                     onChange={(e) => {
                       setTestApiKey(e.target.value);
-                      setError('');
+                      setErrors(prev => ({ ...prev, test: '' }));
                     }}
                     placeholder="Enter your API key..."
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200 bg-gray-50 hover:bg-white"
@@ -427,7 +435,7 @@ function Dashboard() {
                     <button
                       onClick={() => {
                         setTestApiKey('');
-                        setError('');
+                        setErrors(prev => ({ ...prev, test: '' }));
                       }}
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
@@ -448,7 +456,7 @@ function Dashboard() {
                     value={testQuery}
                     onChange={(e) => {
                       setTestQuery(e.target.value);
-                      setError('');
+                      setErrors(prev => ({ ...prev, test: '' }));
                     }}
                     placeholder="Enter your query..."
                     className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200 bg-gray-50 hover:bg-white"
@@ -479,11 +487,7 @@ function Dashboard() {
                 Response
               </label>
               <div className="h-full">
-                {error ? (
-                  <div className="p-4 bg-red-50 rounded-lg text-sm text-red-700 whitespace-pre-wrap shadow-inner h-full overflow-auto">
-                    {error}
-                  </div>
-                ) : testResponse ? (
+                { testResponse ? (
                   <div className="p-4 bg-white rounded-lg text-sm text-gray-700 whitespace-pre-wrap shadow-inner h-full overflow-auto">
                     {testResponse}
                   </div>
