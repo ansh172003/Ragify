@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../config';
@@ -6,11 +6,20 @@ import { API_URL } from '../config';
 function Signup() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    // Check if user is already authenticated
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -22,15 +31,27 @@ function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     try {
-      const response = await axios.post(`${API_URL}/api/auth/register`, formData);
+      const response = await axios.post(`${API_URL}/api/auth/register`, {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password
+      });
+      
       if (response.data) {
-        // Redirect to login page on successful signup
-        navigate('/login');
+        // Store the token in localStorage
+        localStorage.setItem('token', response.data.access_token);
+        // Redirect to dashboard
+        navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred during signup');
+      setError(err.response?.data?.message || 'Registration failed');
     }
   };
 
@@ -45,7 +66,7 @@ function Signup() {
         )}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="name" className="block text-sm font-semibold mb-2">User Name</label>
+            <label htmlFor="username" className="block text-sm font-semibold mb-2">User Name</label>
             <input 
               type="text" 
               id="username" 
@@ -77,6 +98,18 @@ function Signup() {
               onChange={handleChange}
               className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" 
               placeholder="Create a password"
+              required
+            />
+          </div>
+          <div className="mb-6">
+            <label htmlFor="confirmPassword" className="block text-sm font-semibold mb-2">Confirm Password</label>
+            <input 
+              type="password" 
+              id="confirmPassword" 
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+              placeholder="Confirm your password"
               required
             />
           </div>

@@ -1,8 +1,24 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    setIsAuthenticated(!!token);
+  }, []);
+
+  const handleLogout = () => {
+    // Clear authentication data
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+    // Navigate to home page
+    navigate('/');
+  };
 
   return (
     <header className="bg-blue-900 text-white fixed top-0 left-0 w-full shadow-lg z-50">
@@ -52,24 +68,48 @@ function Header() {
                 Pricing
               </Link>
             </li>
-            <li>
-              <Link
-                to="/login"
-                className="block py-2 px-4 hover:text-yellow-300 transition-colors"
-                onClick={() => setMenuOpen(false)}
-              >
-                Login
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/signup"
-                className="block py-2 px-4 hover:text-yellow-300 transition-colors"
-                onClick={() => setMenuOpen(false)}
-              >
-                Sign Up
-              </Link>
-            </li>
+            {isAuthenticated ? (
+              <>
+                <li>
+                  <Link
+                    to="/dashboard"
+                    className="block py-2 px-4 hover:text-yellow-300 transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    onClick={handleLogout}
+                    className="block py-2 px-4 hover:text-yellow-300 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <Link
+                    to="/login"
+                    className="block py-2 px-4 hover:text-yellow-300 transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/signup"
+                    className="block py-2 px-4 hover:text-yellow-300 transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                </li>
+              </>
+            )}
           </ul>
         </nav>
       </div>
